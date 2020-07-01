@@ -45,8 +45,7 @@ class NeuralynxNrdRecordingExtractor(RecordingExtractor):
     https://github.com/kghose/neurapy
 
     TODO:
-        Read the Neuralynx config file to determine electrode configuration.
-        nrd extension and valid file checking
+        (Optional) Read the Neuralynx config file to determine electrode configuration.
     """
     extractor_name = 'NeuralynxNrdRecording'
     installed = True  # check at class level if installed or not
@@ -62,6 +61,7 @@ class NeuralynxNrdRecordingExtractor(RecordingExtractor):
             Whether or not to implement CRC error checking for each record.
             Error checking is slower, but returns accurate records.
         """
+        assert Path(file_name).suffix == '.nrd', "{} is not a Neuralynx nrd file (.nrd)".format(file_name)
 
         RecordingExtractor.__init__(self)
         self._nrd_file_name = file_name
