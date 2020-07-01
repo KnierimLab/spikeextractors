@@ -1,2 +1,2 @@
 from .plexonextractor import PlexonRecordingExtractor, PlexonSortingExtractor
-from .neuralynxextractor import NeuralynxRecordingExtractor, NeuralynxSortingExtractor
+from .neuralynxextractor import NeuralynxRecordingExtractor, NeuralynxNrdRecordingExtractor, NeuralynxSortingExtractor

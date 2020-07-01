@@ -23,7 +23,7 @@ from .extractors.mcsh5recordingextractor.mcsh5recordingextractor import MCSH5Rec
 from .extractors.shybridextractors import SHYBRIDRecordingExtractor, SHYBRIDSortingExtractor
 from .extractors.nixioextractors.nixioextractors import NIXIORecordingExtractor, NIXIOSortingExtractor
 from .extractors.neoextractors import (PlexonRecordingExtractor, PlexonSortingExtractor,
-                                       NeuralynxRecordingExtractor, NeuralynxSortingExtractor)
+                                       NeuralynxRecordingExtractor, NeuralynxNrdRecordingExtractor, NeuralynxSortingExtractor)
 from .extractors.neuroscopesortingextractor import NeuroscopeSortingExtractor
 from .extractors.waveclussortingextractor import WaveClusSortingExtractor
 
@@ -45,11 +45,12 @@ recording_extractor_full_list = [
     MCSH5RecordingExtractor,
     SHYBRIDRecordingExtractor,
     NIXIORecordingExtractor,
+    NeuralynxNrdRecordingExtractor,
 
     # neo based
     PlexonRecordingExtractor,
     NeuralynxRecordingExtractor
-    
+
 ]
 
 recording_extractor_dict = {recording_class.extractor_name: recording_class for recording_class in recording_extractor_full_list}
