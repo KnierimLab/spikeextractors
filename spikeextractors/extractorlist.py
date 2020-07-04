@@ -26,6 +26,7 @@ from .extractors.neoextractors import (PlexonRecordingExtractor, PlexonSortingEx
                                        NeuralynxRecordingExtractor, NeuralynxNrdRecordingExtractor, NeuralynxSortingExtractor)
 from .extractors.neuroscopesortingextractor import NeuroscopeSortingExtractor
 from .extractors.waveclussortingextractor import WaveClusSortingExtractor
+from .extractors.winclustsortingextractor import WinClustSortingExtractor
 
 recording_extractor_full_list = [
     MdaRecordingExtractor,
@@ -73,10 +74,11 @@ sorting_extractor_full_list = [
     NIXIOSortingExtractor,
     NeuroscopeSortingExtractor,
     WaveClusSortingExtractor,
+    WinClustSortingExtractor,
+
     # neo based
     PlexonSortingExtractor,
     NeuralynxSortingExtractor,
-    
 ]
 
 installed_sorting_extractor_list = [sx for sx in sorting_extractor_full_list if sx.installed]
