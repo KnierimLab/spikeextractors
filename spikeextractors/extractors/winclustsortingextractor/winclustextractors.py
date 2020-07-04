@@ -1,6 +1,7 @@
 from spikeextractors import SortingExtractor
 import numpy as np
 import glob
+from spikeextractors.extraction_tools import cast_start_end_frame
 
 file_path = 'E:/Rat883/200317_Rat883-16/Neuralynx/TT11'
 
@@ -10,11 +11,12 @@ class WinClustSortingExtractor(SortingExtractor):
     installed = True
     is_writable = True
 
-    def __init__(self, file_path, sampling_frequency=None):
+    def __init__(self, dir_path, sampling_frequency=10000000):
         SortingExtractor.__init__(self)
-        self.file_path = file_path
+        self.dir_path = dir_path
         self.cl_files = glob.glob(self.file_path + "/cl-maze*.*", recursive=True)
-
+        self._unit_ids = [0, 1, 2, 3]
+        self._sampling_frequency = sampling_frequency
         self._features = {
             'MaxHeight': [],
             'MaxWidth': [],
@@ -22,11 +24,13 @@ class WinClustSortingExtractor(SortingExtractor):
             'YPos': [],
             'Timestamp': [],
             'SpikeID': [],
-            'X': {'Peak': [], 'PreValley': [], 'Energy': []},
-            'Y': {'Peak': [], 'PreValley': [], 'Energy': []},
-            'A': {'Peak': [], 'PreValley': [], 'Energy': []},
-            'B': {'Peak': [], 'PreValley': [], 'Energy': []}
+            0: {'Peak': [], 'PreValley': [], 'Energy': []},
+            1: {'Peak': [], 'PreValley': [], 'Energy': []},
+            2: {'Peak': [], 'PreValley': [], 'Energy': []},
+            3: {'Peak': [], 'PreValley': [], 'Energy': []}
         }
+        with open(self.cl_files[0], 'r') as t1:
+            self.start_time = int(t1.read().splitlines()[11])
 
         self.struct = []
         for CLFile in self.cl_files:
@@ -46,16 +50,22 @@ class WinClustSortingExtractor(SortingExtractor):
                 res = [idx for idx, key in enumerate(self._features) if key == feature]
                 self._features[feature] = self.sorted_events_time[:, (res[0] - 5)]
             elif isinstance(self._features[feature], dict):
-                for index, subfeature in enumerate(self._features[feature]):
-                    num = _id_code_from_id(feature) + 1
-                    self._features[feature][subfeature] = self.sorted_events_time[:, (num + (index * 5))]
+                for index, sub_feature in enumerate(self._features[feature]):
+                    num = feature + 1
+                    self._features[feature][sub_feature] = self.sorted_events_time[:, (num + (index * 5))]
 
     def get_unit_ids(self):
-        letter_ids = 'XYAB'
-        return list(letter_ids)
+        return self._unit_ids
 
     def get_unit_spike_train(self, unit_id, start_frame=None, end_frame=None):
-        return self.sorted_events_time[:, -1]
+        start_frame, end_frame = cast_start_end_frame(start_frame, end_frame)
+        if start_frame is None:
+            start_frame = 0
+        if end_frame is None:
+            end_frame = np.Inf
+        converted_train = (self.sorted_events_time[:, -1] - self.start_time) * self._sampling_frequency
+        ind = np.where((converted_train >= start_frame) & (converted_train <= end_frame))
+        return np.rint(converted_train[ind]).astype(int)
 
 
 # following functions are to interface between how we like to identify electrodes in a tt vs. how SI wants to ID units.
