@@ -11,10 +11,10 @@ class WinClustSortingExtractor(SortingExtractor):
     installed = True
     is_writable = True
 
-    def __init__(self, dir_path, sampling_frequency=10000000):
+    def __init__(self, dir_path, sampling_frequency=10):  # sample frequency is in MHz while timestamps are in microsec.
         SortingExtractor.__init__(self)
         self.dir_path = dir_path
-        self.cl_files = glob.glob(self.file_path + "/cl-maze*.*", recursive=True)
+        self.cl_files = glob.glob(self.dir_path + "/cl-maze*.*", recursive=True)
         self._unit_ids = [0, 1, 2, 3]
         self._sampling_frequency = sampling_frequency
         self._features = {
@@ -40,9 +40,14 @@ class WinClustSortingExtractor(SortingExtractor):
             for row in range(len(data)):
                 data[row] = [float(x) for x in data[row].split(',')]
             self.struct.append(np.array(data))
-        self.cluster_starts = np.cumsum([len(y) for y in self.struct])
+        self.cluster_ends = np.cumsum([len(y) for y in self.struct]).tolist()
+        self.cluster_ends.insert(0, 0)
         self.all_events = np.vstack(self.struct)
         self.sorted_events_time = self.all_events[np.argsort(self.all_events[:, -1])]
+        self.converted_train = (self.sorted_events_time[:, -1] - self.start_time) * self._sampling_frequency
+
+        # Get neighborhood data (ie max peak per spike)
+        self.peak_chan = np.argmax(self.sorted_events_time[:, 1:4], axis=1)
 
         # Populating the dictionary of spike features
         for feature in self._features:
@@ -63,10 +68,26 @@ class WinClustSortingExtractor(SortingExtractor):
             start_frame = 0
         if end_frame is None:
             end_frame = np.Inf
-        converted_train = (self.sorted_events_time[:, -1] - self.start_time) * self._sampling_frequency
-        ind = np.where((converted_train >= start_frame) & (converted_train <= end_frame))
-        return np.rint(converted_train[ind]).astype(int)
+        ind = np.where((self.converted_train >= start_frame) & (self.converted_train <= end_frame))
+        return np.rint(self.converted_train[ind]).astype(int)
 
+    def get_cluster_spike_train(self, cluster_number=None):
+        start_point = self.cluster_ends[cluster_number - 1]
+        end_point = self.cluster_ends[cluster_number] - 1
+        cluster_train = (self.all_events[start_point:end_point, -1] - self.start_time) * self._sampling_frequency
+        return cluster_train
+
+    def get_neighbor_spike_train(self, unit_id, start_frame=None, end_frame=None):
+        start_frame, end_frame = cast_start_end_frame(start_frame, end_frame)
+        if start_frame is None:
+            start_frame = 0
+        if end_frame is None:
+            end_frame = np.Inf
+        ind = np.where((self.peak_chan == unit_id) &
+                       (self.sorted_events_time[:, -1] >= start_frame) &
+                       (self.sorted_events_time[:, -1] <= end_frame)
+                       )
+        return np.rint(self.converted_train[ind]).astype(int)
 
 # following functions are to interface between how we like to identify electrodes in a tt vs. how SI wants to ID units.
 
