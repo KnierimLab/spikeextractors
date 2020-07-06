@@ -44,7 +44,7 @@ class WinClustSortingExtractor(SortingExtractor):
         self.cluster_ends.insert(0, 0)
         self.all_events = np.vstack(self.struct)
         self.sorted_events_time = self.all_events[np.argsort(self.all_events[:, -1])]
-        self.converted_train = (self.sorted_events_time[:, -1] - self.start_time) * self._sampling_frequency
+        self.converted_train = (self.sorted_events_time[:, -1] - self.start_time / 1E6) * self._sampling_frequency
 
         # Get neighborhood data (ie max peak per spike)
         self.peak_chan = np.argmax(self.sorted_events_time[:, 1:4], axis=1)
