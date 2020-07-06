@@ -3,15 +3,12 @@ import numpy as np
 import glob
 from spikeextractors.extraction_tools import cast_start_end_frame
 
-file_path = 'E:/Rat883/200317_Rat883-16/Neuralynx/TT11'
-
-
 class WinClustSortingExtractor(SortingExtractor):
     extractor_name = 'WinClustSortingExtractor'
     installed = True
     is_writable = True
 
-    def __init__(self, dir_path, sampling_frequency=10):  # sample frequency is in MHz while timestamps are in microsec.
+    def __init__(self, dir_path, sampling_frequency):  # sample frequency is in Hz while timestamps are in us.
         SortingExtractor.__init__(self)
         self.dir_path = dir_path
         self.cl_files = glob.glob(self.dir_path + "/cl-maze*.*", recursive=True)
@@ -44,7 +41,7 @@ class WinClustSortingExtractor(SortingExtractor):
         self.cluster_ends.insert(0, 0)
         self.all_events = np.vstack(self.struct)
         self.sorted_events_time = self.all_events[np.argsort(self.all_events[:, -1])]
-        self.converted_train = (self.sorted_events_time[:, -1] - self.start_time / 1E6) * self._sampling_frequency
+        self.converted_train = (self.sorted_events_time[:, -1] - self.start_time)/1.0e6 * self._sampling_frequency
 
         # Get neighborhood data (ie max peak per spike)
         self.peak_chan = np.argmax(self.sorted_events_time[:, 1:4], axis=1)
