@@ -10,13 +10,13 @@ class WinClustSortingExtractor(SortingExtractor):
     installed = True
     is_writable = True
 
-    def __init__(self, dir_path, sampling_frequency):  # sample frequency is in Hz while timestamps are in us.
+    def __init__(self, dir_path):  # sample frequency is in Hz while timestamps are in us.
         SortingExtractor.__init__(self)
         self.dir_path = dir_path
         self.cl_files = glob.glob(self.dir_path + "/cl-maze*.*", recursive=True)
         self.ntt_file = glob.glob(self.dir_path + "TT*.NTT", recursive=False)
         self._unit_ids = [0, 1, 2, 3]
-        self._sampling_frequency = sampling_frequency
+        _, _, self._sampling_frequency = readNTT(self.ntt_file)
         self._features = {
             'MaxHeight': [],
             'MaxWidth': [],
