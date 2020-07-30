@@ -4,6 +4,7 @@ import glob
 import re
 from spikeextractors.extraction_tools import cast_start_end_frame
 
+
 class WinClustSortingExtractor(SortingExtractor):
     extractor_name = 'WinClustSortingExtractor'
     installed = True
@@ -43,7 +44,7 @@ class WinClustSortingExtractor(SortingExtractor):
         self.cluster_ends.insert(0, 0)
         self.all_events = np.vstack(self.struct)
         self.sorted_events_time = self.all_events[np.argsort(self.all_events[:, -1])]
-        self.converted_train = (self.sorted_events_time[:, -1] - self.start_time)/1.0e6 * self._sampling_frequency
+        self.converted_train = (self.sorted_events_time[:, -1] - self.start_time) / 1.0e6 * self._sampling_frequency
 
         # Get neighborhood data (i.e. max peak per spike)
         self.peak_chan = np.argmax(self.sorted_events_time[:, 1:4], axis=1)
@@ -76,7 +77,8 @@ class WinClustSortingExtractor(SortingExtractor):
         else:
             start_point = self.cluster_ends[cluster_number - 1]
             end_point = self.cluster_ends[cluster_number] - 1
-            cluster_train = (self.all_events[start_point:end_point, -1] - self.start_time)/1.0e6 * self._sampling_frequency
+            cluster_train = (self.all_events[start_point:end_point,
+                             -1] - self.start_time) / 1.0e6 * self._sampling_frequency
             return cluster_train
 
     def get_neighbor_spike_train(self, unit_id, start_frame=None, end_frame=None):
@@ -86,33 +88,39 @@ class WinClustSortingExtractor(SortingExtractor):
         if end_frame is None:
             end_frame = np.Inf
         ind = np.where((self.peak_chan == unit_id) &
-                       (self.sorted_events_time[:, -1] >= start_frame) &
-                       (self.sorted_events_time[:, -1] <= end_frame)
+                       (self.converted_train >= start_frame) &
+                       (self.converted_train <= end_frame)
                        )
         return np.rint(self.converted_train[ind]).astype(int)
 
-    def get_spike_waveform(self, cluster=None, start_frame=None, end_frame=None):
+    def get_spike_waveform(self, cluster_number=None, start_frame=None, end_frame=None):
         start_frame, end_frame = cast_start_end_frame(start_frame, end_frame)
         if start_frame is None:
             start_frame = 0
         if end_frame is None:
             end_frame = np.Inf
         _, waves, _ = readNTT(self.ntt_file)
-        if cluster is None:
-            times = self.sorted_events_time[(np.where((self.sorted_events_time[:, -1] >= start_frame) &
-                                                  (self.sorted_events_time[:, -1] <= end_frame))), -1]
+        if cluster_number is None:
+            times = self.sorted_events_time[(np.where((self.converted_train >= start_frame) &
+                                                      (self.converted_train <= end_frame)
+                                                      )),
+                                            -1]
             ind = np.where(np.isin([waves[i][0] for i in range(len(waves))], times))[0]
             nlx_data = waves[ind]
             return nlx_data
-        elif cluster is not None:
-            start_point = self.cluster_ends[cluster_number - 1]
-            end_point = self.cluster_ends[cluster_number] - 1
-            times = self.all_events[(np.where((self.all_events[start_point:end_point, -1] >= start_frame) &
-                                              (self.all_events[start_point:end_point, -1] <= end_frame)
-                                              ))]
-            ind = np.where(np.isin([waves[i][0] for i in range(len(waves))], times))[0]
-            nlx_cluster_data = waves[ind]
-            return nlx_cluster_data
+        elif cluster_number is not None:
+            if isinstance(cluster_number, int):
+                start_point = self.cluster_ends[cluster_number - 1]
+                end_point = self.cluster_ends[cluster_number] - 1
+                times = self.all_events[(np.where((self.all_events[start_point:end_point, -1] >= start_frame) &
+                                                  (self.all_events[start_point:end_point, -1] <= end_frame)
+                                                  ))]
+                ind = np.where(np.isin([waves[i][0] for i in range(len(waves))], times))[0]
+                nlx_cluster_data = waves[ind]
+                return nlx_cluster_data
+            elif not isinstance(cluster_number, int):
+                print('Use numerical tetrode indexing')
+
 
 # following functions are to interface between how we like to identify electrodes in a tt vs. how SI wants to ID units.
 
@@ -144,17 +152,18 @@ def _id_from_id_code(id_code):
         _id = None
     return _id
 
-def readNTT (filename):
+
+def readNTT(filename):
     "Reads a Neuralynx Tetrode Spike Record (NTT) file and returns records"
     f = open(filename, 'rb')
-    hdr = f.read(16*1024)
+    hdr = f.read(16 * 1024)
     dt = np.dtype([('ts', np.uint64), ('dwScNumber', np.uint32), ('dwCellNumber', np.uint32),
-        ('dnParams', np.uint32, 8), ('data', np.int16, [32, 4])])
+                   ('dnParams', np.uint32, 8), ('data', np.int16, [32, 4])])
     rec = np.fromfile(f, dtype=dt)
 
     f.close()
 
-    m = re.search(b"-SamplingFrequency\s+(\d+)",hdr)
+    m = re.search(b"-SamplingFrequency\s+(\d+)", hdr)
     freq = int(m.group(1))
 
     return hdr, rec, freq
