@@ -12,7 +12,7 @@ setuptools.setup(
     author="Alessio Buccino, Cole Hurwitz, Samuel Garcia, Jeremy Magland, Matthias Hennig",
     author_email="alessiob@ifi.uio.no",
     description="Python module for extracting recorded and spike sorted extracellular data from different file types and formats",
-    url="https://github.com/SpikeInterface/spikeextractors",
+    url="https://github.com/Knierimlab/spikeextractors",
     long_description=long_description,
     long_description_content_type="text/markdown",
     packages=setuptools.find_packages(),
@@ -20,9 +20,9 @@ setuptools.setup(
     install_requires=[
         'numpy',
     ],
-    classifiers=(
+    classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
-    )
+    ]
 )
