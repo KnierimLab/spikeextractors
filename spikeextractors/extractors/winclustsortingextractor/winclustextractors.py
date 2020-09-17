@@ -16,7 +16,7 @@ class WinClustSortingExtractor(SortingExtractor):
         self.cl_files = glob.glob(self.dir_path + "/cl-maze*.*", recursive=True)
         self.ntt_file = glob.glob(self.dir_path + "/TT*.NTT", recursive=False)
         self._unit_ids = [0, 1, 2, 3]
-        _, _, self._sampling_frequency = readNTT(self.ntt_file)
+        _, _, self._sampling_frequency = readNTT(self.ntt_file[0])
         self._features = {
             'MaxHeight': [],
             'MaxWidth': [],
